@@ -122,4 +122,56 @@ object ui_components {
 
     def draw(): Unit
   }
+
+  object executable {
+    final case class TurtleExecuting(run: Turtle => Unit) { self =>
+      def +(that: TurtleExecuting): TurtleExecuting = TurtleExecuting { t =>
+        self.run(t)
+        that.run(t)
+      }
+    }
+
+    object TurtleExecuting {
+      def turnLeft(degrees: Int): TurtleExecuting = TurtleExecuting { _.turnLeft(degrees) }
+
+      def turnRight(degrees: Int): TurtleExecuting = TurtleExecuting { _.turnRight(degrees) }
+
+      def goForward(): TurtleExecuting = TurtleExecuting { _.goForward() }
+
+      def goBackward(): TurtleExecuting = TurtleExecuting { _.goBackward() }
+
+      def draw(): TurtleExecuting = TurtleExecuting { _.draw() }
+    }
+  }
+
+  object declarative {
+    sealed trait TurtleDeclaration { self =>
+      def combine(that: TurtleDeclaration): TurtleDeclaration = TurtleDeclaration.Combine(self, that)
+    }
+
+    object TurtleDeclaration {
+      case class Combine(a: TurtleDeclaration, b: TurtleDeclaration) extends TurtleDeclaration
+      case object GoForward                                          extends TurtleDeclaration
+      final case class Turn(degrees: Int)                            extends TurtleDeclaration
+      case object Draw                                               extends TurtleDeclaration
+
+      def turnLeft(degrees: Int): TurtleDeclaration = Turn(360 - degrees)
+
+      def turnRight(degrees: Int): TurtleDeclaration = Turn(degrees)
+
+      def goForward(): TurtleDeclaration = GoForward
+
+      def goBackward(): TurtleDeclaration = Combine(Turn(180), GoForward)
+
+      def draw(): TurtleDeclaration = Draw
+    }
+
+    import TurtleDeclaration._
+    def execute(turtle: Turtle, turtleDeclaration: TurtleDeclaration): Unit = turtleDeclaration match {
+      case Combine(a, b) => execute(turtle, a); execute(turtle, b)
+      case GoForward     => turtle.goBackward()
+      case Turn(degrees) => turtle.turnRight(degrees)
+      case Draw          => turtle.draw()
+    }
+  }
 }

@@ -19,8 +19,9 @@ package net.degoes
 object expr {
   sealed trait CalculatedValue[+A]
   object CalculatedValue {
-    final case class Integer(value: Int) extends CalculatedValue[Int]
-    final case class Str(value: String)  extends CalculatedValue[String]
+    final case class Integer(value: Int)  extends CalculatedValue[Int]
+    final case class Str(value: String)   extends CalculatedValue[String]
+    final case class Bool(value: Boolean) extends CalculatedValue[Boolean]
 
     /**
      * EXERCISE 1
@@ -31,7 +32,7 @@ object expr {
      * NOTE: Be sure to modify the `calculate` method below, so that it can
      * handle the new operation.
      */
-    final case class Add()
+    final case class Add(a: CalculatedValue[Int], b: CalculatedValue[Int]) extends CalculatedValue[Int]
 
     /**
      * EXERCISE 2
@@ -42,7 +43,7 @@ object expr {
      * NOTE: Be sure to modify the `calculate` method below, so that it can
      * handle the new operation.
      */
-    final case class Subtract()
+    final case class Subtract(a: CalculatedValue[Int], b: CalculatedValue[Int]) extends CalculatedValue[Int]
 
     /**
      * EXERCISE 3
@@ -53,7 +54,7 @@ object expr {
      * NOTE: Be sure to modify the `calculate` method below, so that it can
      * handle the new operation.
      */
-    final case class Multiply()
+    final case class Multiply(a: CalculatedValue[Int], b: CalculatedValue[Int]) extends CalculatedValue[Int]
 
     /**
      * EXERCISE 4
@@ -64,7 +65,7 @@ object expr {
      * NOTE: Be sure to modify the `calculate` method below, so that it can
      * handle the new operation.
      */
-    final case class Concat()
+    final case class Concat(a: CalculatedValue[String], b: CalculatedValue[String]) extends CalculatedValue[String]
 
     /**
      * EXERCISE 5
@@ -75,15 +76,21 @@ object expr {
      * NOTE: Be sure to modify the `calculate` method below, so that it can
      * handle the new operation.
      */
-    final case class StartsWith()
+    final case class StartsWith(startsWith: String, value: CalculatedValue[String]) extends CalculatedValue[Boolean]
   }
 
   import CalculatedValue._
 
   def calculate[A](expr: CalculatedValue[A]): A =
     expr match {
-      case Integer(v) => v
-      case Str(v)     => v
+      case Integer(v: Int)                                   => v
+      case Str(v: String)                                    => v
+      case Bool(v: Boolean)                                  => v
+      case Add(a: CalculatedValue[A], b: CalculatedValue[A]) => calculate(a) + calculate(b)
+      case Subtract(a, b)                                    => calculate(a) - calculate(b)
+      case Multiply(a, b)                                    => calculate(a) * calculate(b)
+      case Concat(a, b)                                      => calculate(a) + calculate(b)
+      case StartsWith(startsWith, value)                     => calculate(value).startsWith(startsWith)
     }
 }
 
@@ -122,7 +129,7 @@ object parser {
      * NOTE: Be sure to modify the `parse` method below, so that it can
      * handle the new operation.
      */
-    final case class Succeed()
+    final case class Succeed[A](value: A) extends Parser[A]
 
     /**
      * EXERCISE 2
@@ -132,7 +139,7 @@ object parser {
      * NOTE: Be sure to modify the `parse` method below, so that it can
      * handle the new operation.
      */
-    final case class Fail()
+    final case class Fail(error: String) extends Parser[Nothing]
 
     /**
      * EXERCISE 3
@@ -143,7 +150,7 @@ object parser {
      * NOTE: Be sure to modify the `parse` method below, so that it can
      * handle the new operation.
      */
-    final case class OrElse()
+    final case class OrElse[A](a: Parser[A], b: Parser[A]) extends Parser[A]
 
     /**
      * EXERCISE 4
@@ -154,7 +161,7 @@ object parser {
      * NOTE: Be sure to modify the `parse` method below, so that it can
      * handle the new operation.
      */
-    final case class Sequence[A, B]()
+    final case class Sequence[A, B](a: Parser[A], b: Parser[B]) extends Parser[(A, B)]
   }
 
   import Parser._
